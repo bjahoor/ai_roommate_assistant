@@ -1,5 +1,18 @@
 **Made and tested for Jetson Orin Nano Super Developer Kit (with Jetpack 6.1)**
 
+---
+
+# Compressed Demo Video
+
+<video src="Ai Room Assistant Demo.mp4" controls></video>
+
+---
+
+# System Architecture
+
+<img width="404" height="543" alt="image" src="https://github.com/user-attachments/assets/e807d2cb-9c06-4c71-b28f-db987eb4a182" />
+
+---
 
 # Run Ollama
 
