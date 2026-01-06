@@ -11,3 +11,14 @@ Pull Model in new terminal: `ollama run qwen2.5:0.5b` (doesn't have to be inside
 
 Optionally test with "Open Web UI Sever": `docker run -d --network=host -v open-webui:/app/backend/data -e OLLAMA_BASE_URL=http://127.0.0.1:11434 --name open-webui --restart always ghcr.io/open-webui/open-webui:main`
 
+# Run YOLO
+
+Terminal 2: `docker rm -f yolo 2>/dev/null; t=ultralytics/ultralytics:latest-jetson-jetpack6 && sudo docker pull $t && sudo docker run -d --name yolo --ipc=host --runtime=nvidia -p 8000:8000 -v $(pwd)/yolo_server.py:/yolo_server.py -w /ultralytics $t bash -c "pip install fastapi uvicorn python-multipart && python3 /yolo_server.py"`
+
+# Run FastAPI
+
+Can be run in terminal 2: `python3 -m uvicorn app:app --host 0.0.0.0 --port 8001` (leave hannging)
+
+# Run UI Sever
+
+Terminal 3: `cd ui/` then run `python3 -m http.server 8002` and type `http://localhost:8002/` in browser
