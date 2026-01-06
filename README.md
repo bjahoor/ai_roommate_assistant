@@ -4,7 +4,7 @@
 
 # Compressed Demo Video
 
-[Watch Demo](https://raw.githubusercontent.com/bjahoor/ai_roommate_assistant/main/Ai%20Room%20Assistant%20Demo.mp4)
+[![Demo](https://raw.githubusercontent.com/bjahoor/ai_roommate_assistant/main/thumbnail.png)](https://raw.githack.com/bjahoor/ai_roommate_assistant/main/Ai%20Room%20Assistant%20Demo.mp4)
 
 ---
 
