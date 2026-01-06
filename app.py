@@ -3,14 +3,24 @@
 import time
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+import os
 
 import llm
 import state
 import vision
 
 app = FastAPI()
+
+# Serve UI static files
+ui_path = os.path.join(os.path.dirname(__file__), "ui")
+app.mount("/ui", StaticFiles(directory=ui_path), name="ui")
+
+@app.get("/")
+async def root():
+    return FileResponse(os.path.join(ui_path, "index.html"))
 
 app.add_middleware(
     CORSMiddleware,
