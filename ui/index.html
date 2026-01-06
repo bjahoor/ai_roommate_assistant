@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jetson Vision Assistant</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg: #050816;
+            --bg-elevated: #0f172a;
+            --accent: #38bdf8;
+            --accent-soft: rgba(56, 189, 248, 0.15);
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --border: #1f2937;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top, #1d293b 0, #020617 55%, #000 100%);
+            color: var(--text);
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+            padding: 24px;
+        }
+        .shell {
+            width: 100%;
+            max-width: 1200px;
+            background: linear-gradient(145deg, rgba(148, 163, 184, 0.12), rgba(15, 23, 42, 0.9));
+            border-radius: 18px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            box-shadow:
+                0 18px 45px rgba(15, 23, 42, 0.65),
+                0 0 0 1px rgba(15, 23, 42, 0.9);
+            padding: 18px 18px 20px;
+            backdrop-filter: blur(18px);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        .title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pill {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            color: var(--muted);
+        }
+        .subtitle {
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--muted);
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(37, 99, 235, 0.5);
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #22c55e;
+            box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.25);
+        }
+        .content {
+            display: grid;
+            grid-template-columns: minmax(0, 3fr) minmax(0, 2.3fr);
+            gap: 14px;
+        }
+        @media (max-width: 900px) {
+            body {
+                padding: 16px;
+            }
+            .shell {
+                padding: 14px 14px 16px;
+            }
+            .content {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+        .panel {
+            background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), rgba(15, 23, 42, 0.96));
+            border-radius: 14px;
+            border: 1px solid rgba(15, 23, 42, 0.9);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        .panel::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top, rgba(56, 189, 248, 0.06), transparent 65%);
+            pointer-events: none;
+        }
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.78rem;
+            color: var(--muted);
+            z-index: 1;
+        }
+        .chip {
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.4);
+        }
+        .video-frame {
+            position: relative;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(15, 23, 42, 0.9);
+            box-shadow: 0 12px 35px rgba(15, 23, 42, 0.95);
+            background: #020617;
+            z-index: 1;
+            min-height: 240px;
+        }
+        .scene-summary {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            color: var(--text);
+            font-size: 0.86rem;
+            line-height: 1.4;
+            min-height: 48px;
+            white-space: pre-wrap;
+        }
+        #video {
+            display: block;
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+        }
+        #overlay {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .response-box {
+            flex: 1;
+            min-height: 400px;
+            max-height: 800px;
+            padding: 10px 11px;
+            border-radius: 10px;
+            background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), rgba(15, 23, 42, 0.96));
+            border: 1px solid rgba(30, 64, 175, 0.8);
+            color: var(--text);
+            font-size: 0.86rem;
+            line-height: 1.5;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .response-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--muted);
+            margin-bottom: 2px;
+        }
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding-top: 2px;
+        }
+        #text {
+            flex: 1;
+            padding: 9px 11px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.96);
+            color: var(--text);
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+        }
+        #text::placeholder {
+            color: var(--muted);
+        }
+        #text:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.5), 0 0 0 6px rgba(56, 189, 248, 0.18);
+            background: rgba(15, 23, 42, 0.98);
+        }
+        button {
+            padding: 9px 16px;
+            border-radius: 999px;
+            border: 1px solid rgba(56, 189, 248, 0.9);
+            background: radial-gradient(circle at top left, #38bdf8, #0ea5e9);
+            color: #0b1120;
+            font-size: 0.86rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            box-shadow:
+                0 10px 25px rgba(56, 189, 248, 0.35),
+                0 0 0 1px rgba(8, 47, 73, 0.9);
+            transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+        }
+        button:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.05);
+            box-shadow:
+                0 14px 32px rgba(56, 189, 248, 0.5),
+                0 0 0 1px rgba(8, 47, 73, 1);
+        }
+        button:active {
+            transform: translateY(0);
+            box-shadow:
+                0 8px 18px rgba(56, 189, 248, 0.35),
+                0 0 0 1px rgba(8, 47, 73, 1);
+        }
+        .button-icon {
+            font-size: 0.9rem;
+        }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2px;
+            font-size: 0.72rem;
+            color: var(--muted);
+        }
+        .footer span {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="shell">
+        <header class="header">
+            <div class="title-group">
+                <div class="title">
+                    Jetson Vision Assistant
+                    <span class="pill">Watchful Roommate</span>
+                </div>
+                <div class="subtitle">
+                    Live camera on the left, conversational roommate on the right.
+                </div>
+            </div>
+            <div class="status">
+                <span class="status-dot"></span>
+                <span>Online · Local YOLO + LLM</span>
+            </div>
+        </header>
+
+        <main class="content">
+            <section class="panel">
+                <div class="panel-header">
+                    <span>Camera feed</span>
+                    <div class="chip" style="display:flex;align-items:center;gap:8px;">
+                        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.8rem;color:var(--muted);">
+                            <input type="checkbox" id="toggle-boxes" style="width:14px;height:14px;" />
+                            Show boxes
+                        </label>
+                        <span>YOLOv8s · USB webcam</span>
+                    </div>
+                </div>
+                <div class="video-frame">
+                    <img id="video" src="http://localhost:8001/video" alt="Live camera feed" />
+                    <canvas id="overlay"></canvas>
+                </div>
+                <div class="scene-summary" id="scene-summary">Scene summary will appear here.</div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-header">
+                    <span>Chat</span>
+                    <span class="chip">The Watchful Roommate</span>
+                </div>
+                <div class="chat-container">
+                    <div class="response-box" id="response">
+                        <div class="response-label">Roommate</div>
+                        <div id="response-text">Ask me what I notice in the room, or anything you're curious about.</div>
+                    </div>
+                    <div class="input-row">
+                        <input id="text" type="text" placeholder="Ask your roommate something about what they see…" />
+                        <button onclick="send()">
+                            <span class="button-icon">➤</span>
+                            <span>Send</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <span>Running fully on-device on your Jetson.</span>
+            <span>Camera → YOLOv8s → Scene state → Watchful Roommate (LLM)</span>
+        </footer>
+    </div>
+
+    <script>
+        // COCO labels for YOLO class IDs
+        const COCO_CLASSES = [
+            "person","bicycle","car","motorcycle","airplane","bus","train","truck",
+            "boat","traffic light","fire hydrant","stop sign","parking meter","bench",
+            "bird","cat","dog","horse","sheep","cow","elephant","bear","zebra",
+            "giraffe","backpack","umbrella","handbag","tie","suitcase","frisbee",
+            "skis","snowboard","sports ball","kite","baseball bat","baseball glove",
+            "skateboard","surfboard","tennis racket","bottle","wine glass","cup",
+            "fork","knife","spoon","bowl","banana","apple","sandwich","orange",
+            "broccoli","carrot","hot dog","pizza","donut","cake","chair","couch",
+            "potted plant","bed","dining table","toilet","tv","laptop","mouse",
+            "remote","keyboard","cell phone","microwave","oven","toaster","sink",
+            "refrigerator","book","clock","vase","scissors","teddy bear","hair drier",
+            "toothbrush"
+        ];
+
+        function summarizeDetections(detections) {
+            if (!detections || detections.length === 0) return "No objects detected.";
+            const parts = detections.slice(0, 12).map((det) => {
+                const cls = det.cls;
+                const conf = det.conf;
+                const name = (cls !== undefined && cls !== null && cls >= 0 && cls < COCO_CLASSES.length)
+                    ? COCO_CLASSES[cls]
+                    : `id ${cls}`;
+                if (conf !== undefined && conf !== null) {
+                    return `${name} (${Math.round(conf * 100)}%)`;
+                }
+                return name;
+            });
+            return parts.join(", ");
+        }
+
+        async function send() {
+            const input = document.getElementById('text');
+            const text = input.value.trim();
+            if (!text) return;
+
+            try {
+                const res = await fetch('http://localhost:8001/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text})
+                });
+                const data = await res.json();
+                const reply = data.response || '';
+                document.getElementById('response-text').textContent = reply || '(no response)';
+            } catch (e) {
+                document.getElementById('response-text').textContent = 'Connection error talking to your roommate.';
+            }
+        }
+
+        function drawBoxes(detections) {
+            const img = document.getElementById('video');
+            const canvas = document.getElementById('overlay');
+            const ctx = canvas.getContext('2d');
+
+            if (!img || !canvas || !ctx) return;
+
+            const rect = img.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            canvas.style.width = rect.width + 'px';
+            canvas.style.height = rect.height + 'px';
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (!detections || !detections.length) return;
+
+            const naturalW = img.naturalWidth || rect.width;
+            const naturalH = img.naturalHeight || rect.height;
+            const scaleX = canvas.width / naturalW;
+            const scaleY = canvas.height / naturalH;
+
+            ctx.lineWidth = 2;
+            ctx.font = '12px "Segoe UI", sans-serif';
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.9)';
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+
+            detections.forEach((det) => {
+                const box = det.xyxy || det.box || det.bbox;
+                const cls = det.cls;
+                const conf = det.conf;
+                if (!box || box.length < 4) return;
+                const [x1, y1, x2, y2] = box;
+                const dx1 = x1 * scaleX;
+                const dy1 = y1 * scaleY;
+                const dx2 = x2 * scaleX;
+                const dy2 = y2 * scaleY;
+                const w = dx2 - dx1;
+                const h = dy2 - dy1;
+
+                ctx.strokeStyle = 'rgba(56, 189, 248, 0.9)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(dx1, dy1, w, h);
+
+                let clsName = undefined;
+                if (cls !== undefined && cls !== null && cls >= 0 && cls < COCO_CLASSES.length) {
+                    clsName = COCO_CLASSES[cls];
+                }
+                const baseLabel = clsName || (det.name || det.label || `id ${cls !== undefined ? cls : '?'}`);
+                const label = baseLabel + (conf !== undefined ? ` (${Math.round(conf * 100)}%)` : '');
+                const padding = 4;
+                const textWidth = ctx.measureText(label).width;
+                const textHeight = 14;
+                const bx = dx1;
+                const by = Math.max(0, dy1 - textHeight - 6);
+
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                ctx.fillRect(bx, by, textWidth + padding * 2, textHeight + padding);
+                ctx.fillStyle = 'rgba(191, 219, 254, 0.95)';
+                ctx.fillText(label, bx + padding, by + textHeight);
+            });
+        }
+
+        async function pollState() {
+            const toggle = document.getElementById('toggle-boxes');
+            if (!toggle || !toggle.checked) {
+                const canvas = document.getElementById('overlay');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx && ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+
+            try {
+                const res = await fetch('http://localhost:8001/state');
+                if (!res.ok) return;
+                const data = await res.json();
+                const detections = data?.detections || [];
+                if (toggle && toggle.checked) {
+                    drawBoxes(detections);
+                }
+                const summaryEl = document.getElementById('scene-summary');
+                if (summaryEl) {
+                    summaryEl.textContent = summarizeDetections(detections);
+                }
+            } catch {
+                // ignore
+            }
+        }
+
+        // Allow Enter key to send and start polling
+        document.addEventListener('DOMContentLoaded', () => {
+            const input = document.getElementById('text');
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    send();
+                }
+            });
+
+            // Poll detections every 1s
+            setInterval(pollState, 1000);
+        });
+    </script>
+</body>
+</html>
+
