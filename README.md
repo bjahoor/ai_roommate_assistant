@@ -6,7 +6,7 @@
 
 <img src="https://github.com/user-attachments/assets/6c6cad60-6a90-46aa-8961-fc1926a216a2" width="400"/>
 
-[Download Demo](https://github.com/bjahoor/ai_roommate_assistant/raw/main/Ai%20Room%20Assistant%20Demo.mp4)
+[Download Compressed Demo Video](https://github.com/bjahoor/ai_roommate_assistant/raw/main/Ai%20Room%20Assistant%20Demo.mp4)
 
 ---
 
