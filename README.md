@@ -4,7 +4,7 @@
 
 # Compressed Demo Video
 
-<video src="Ai Room Assistant Demo.mp4" controls></video>
+<video src="Ai%20Room%20Assistant%20Demo.mp4" controls></video>
 
 ---
 
