@@ -28,6 +28,8 @@ Optionally test with "Open Web UI Sever": `docker run -d --network=host -v open-
 
 # Run YOLO
 
+Quick Link: `https://www.jetson-ai-lab.com/archive/tutorial_ultralytics.html`
+
 Terminal 2: `docker rm -f yolo 2>/dev/null; t=ultralytics/ultralytics:latest-jetson-jetpack6 && sudo docker pull $t && sudo docker run -d --name yolo --ipc=host --runtime=nvidia -p 8000:8000 -v $(pwd)/yolo_server.py:/yolo_server.py -w /ultralytics $t bash -c "pip install fastapi uvicorn python-multipart && python3 /yolo_server.py"`
 
 # Run FastAPI
